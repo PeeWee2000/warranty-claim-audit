@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # Embedding model
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
+    # Model artifacts directory
+    model_dir: str = "/app/data/models"
+
     # Scoring thresholds
     auto_approve_threshold: float = 0.8
     auto_flag_threshold: float = 0.4

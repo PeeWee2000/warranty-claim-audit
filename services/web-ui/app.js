@@ -1,6 +1,7 @@
-const API_BASE = window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "";
+// Determine API base URL:
+// - In Docker Compose, the browser hits the host machine, so use port 8000
+// - In local dev, same thing
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:8000`;
 
 const history = [];
 
@@ -20,7 +21,7 @@ async function submitClaim() {
         });
 
         if (!resp.ok) {
-            const err = await resp.json();
+            const err = await resp.json().catch(() => ({ detail: resp.statusText }));
             alert(`Error: ${err.detail || resp.statusText}`);
             return;
         }
@@ -40,9 +41,12 @@ function displayResult(r) {
     const section = document.getElementById("result-section");
     section.classList.remove("hidden");
 
-    // Confidence score
+    // Confidence score with color coding
     const pct = (r.confidence_score * 100).toFixed(1);
-    document.getElementById("score-display").textContent = `${pct}%`;
+    const scoreEl = document.getElementById("score-display");
+    scoreEl.textContent = `${pct}%`;
+    scoreEl.style.color = r.confidence_score >= 0.8 ? "#166534"
+        : r.confidence_score >= 0.4 ? "#854d0e" : "#991b1b";
 
     // Action badge
     const actionEl = document.getElementById("action-display");
@@ -58,12 +62,22 @@ function displayResult(r) {
     const compEl = document.getElementById("components-display");
     compEl.innerHTML = "";
     for (const breakdown of r.score_breakdown) {
+        if (breakdown.component_scores.length === 0) continue;
+        // Path header
+        const header = document.createElement("div");
+        header.className = "component-row";
+        header.style.fontWeight = "600";
+        header.style.background = "#e5e7eb";
+        const pathLabel = breakdown.path === "vector_similarity" ? "Vector Similarity" : "ML Model";
+        header.innerHTML = `<span>${pathLabel}</span><span>${(breakdown.overall_score * 100).toFixed(0)}%</span>`;
+        compEl.appendChild(header);
+
         for (const cs of breakdown.component_scores) {
             const row = document.createElement("div");
             row.className = "component-row";
             row.innerHTML = `
-                <span>${cs.component}</span>
-                <span class="concern-${cs.concern_level}">${(cs.score * 100).toFixed(0)}%</span>
+                <span>&nbsp;&nbsp;${cs.component}</span>
+                <span class="concern-${cs.concern_level}" title="${cs.explanation || ''}">${(cs.score * 100).toFixed(0)}%</span>
             `;
             compEl.appendChild(row);
         }
@@ -75,10 +89,14 @@ function displayResult(r) {
     for (const f of r.contributing_factors) {
         const row = document.createElement("div");
         row.className = "factor-row";
+        const label = f.concern_level.replace(/_/g, " ");
         row.innerHTML = `
             <span>${f.factor}</span>
-            <span class="concern-${f.concern_level}">${f.concern_level.replace("_", " ")}</span>
+            <span class="concern-${f.concern_level}">${label}</span>
         `;
+        if (f.detail) {
+            row.title = f.detail;
+        }
         factorsEl.appendChild(row);
     }
 }
@@ -95,7 +113,8 @@ function renderHistory() {
         const li = document.createElement("li");
         const score = entry.result.confidence_score;
         li.className = score >= 0.8 ? "score-high" : score >= 0.4 ? "score-medium" : "score-low";
-        li.textContent = `${(score * 100).toFixed(0)}% — ${entry.text.substring(0, 50)}...`;
+        const preview = entry.text.substring(0, 60).replace(/\n/g, " ");
+        li.textContent = `${(score * 100).toFixed(0)}% — ${preview}...`;
         li.onclick = () => {
             document.getElementById("claim-text").value = entry.text;
             displayResult(entry.result);

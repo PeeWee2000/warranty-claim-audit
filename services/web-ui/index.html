@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warranty Claim Audit</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Warranty Claim Audit</h1>
+            <p class="subtitle">Submit a claim for confidence scoring</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <label for="claim-text">Claim Text</label>
+                <textarea id="claim-text" rows="10" placeholder="Paste or type the full warranty claim text here..."></textarea>
+                <button id="submit-btn" onclick="submitClaim()">Score Claim</button>
+            </section>
+
+            <section id="result-section" class="result-section hidden">
+                <h2>Scoring Result</h2>
+                <div id="score-display" class="score-display"></div>
+                <div id="action-display" class="action-display"></div>
+                <h3>Component Scores</h3>
+                <div id="components-display" class="components-display"></div>
+                <h3>Contributing Factors</h3>
+                <div id="factors-display" class="factors-display"></div>
+            </section>
+        </main>
+
+        <aside class="history-sidebar">
+            <h3>History</h3>
+            <ul id="history-list"></ul>
+        </aside>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

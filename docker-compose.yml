@@ -1,0 +1,31 @@
+services:
+  api:
+    build: ./services/api
+    ports:
+      - "8000:8000"
+    environment:
+      - WCA_DEBUG=true
+      - WCA_QDRANT_HOST=qdrant
+      - WCA_QDRANT_PORT=6333
+    depends_on:
+      - qdrant
+    volumes:
+      - ./data/models:/app/data/models:ro
+
+  web-ui:
+    build: ./services/web-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  qdrant_data:
